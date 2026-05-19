@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+:root {
+  /* Custom CSS variables for cafe colors */
+  --color-cafe-brown: #8B5A2B;
+  --color-cafe-gold: #CD950C;
+}
+
+/* Your global body styling for the cafe app */
+body {
+  background: linear-gradient(to bottom, #2a1b15, #dcb99c);
+  min-height: 100vh;
+}
