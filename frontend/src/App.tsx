@@ -1,121 +1,19 @@
-// src/pages/MainPage.tsx
-import { useState } from 'react';
-import MenuCard from './components/MenuCard';
-import type { MenuItem } from './types';
-
-// Mock data to test the layout
-const MOCK_MENU: MenuItem[] = [
-  { id: '1', name: 'Bread', price: 18000, imageUrl: '../src/assets/Bread.png', category: 'Bakery' },
-  { id: '2', name: 'Salad', price: 30000, imageUrl: '../src/assets/Salad.png', category: 'Main Course' },
-  { id: '3', name: 'Hot Chocolate', price: 28000, imageUrl: '../src/assets/Hot-Chocolate.png', category: 'Beverages' },
-  { id: '4', name: 'Jam', price: 20000, imageUrl: '../src/assets/Jam.png', category: 'Breakfast' },
-  { id: '5', name: 'Cookies', price: 25000, imageUrl: '../src/assets/Cookies.png', category: 'Desserts' },
-  { id: '6', name: 'Muffin', price: 18000, imageUrl: '../src/assets/Muffin.png', category: 'Bakery' },
-  { id: '7', name: 'Coffee', price: 23000, imageUrl: '../src/assets/Coffee.png', category: 'Beverages' },
-  { id: '8', name: 'Pastry', price: 28000, imageUrl: '../src/assets/Pastry.png', category: 'Bakery' },
-  { id: '9', name: 'Medialuna', price: 32000, imageUrl: '../src/assets/Medialuna.png', category: 'Bakery'},
-  { id: '10', name: 'Tea', price: 20000, imageUrl: '../src/assets/Tea.png', category: 'Beverages' },
-  { id: '11', name: 'Tartine', price: 38000, imageUrl: '../src/assets/Tartine.png', category: 'Breakfast' },
-  { id: '12', name: 'Basket', price: 62000, imageUrl: '../src/assets/Basket.png', category: 'Main Course' },
-  { id: '13', name: 'Mineral Water', price: 10000, imageUrl: '../src/assets/Mineral-Water.png', category: 'Beverages' },
-  { id: '14', name: 'Fudge', price: 32000, imageUrl: '../src/assets/Fudge.png', category: 'Desserts' },
-  { id: '15', name: 'Juice', price: 28000, imageUrl: '../src/assets/Juice.png', category: 'Beverages' },
-  { id: '16', name: 'Victorian Sponge', price: 38000, imageUrl: '../src/assets/Victorian-Sponge.png', category: 'Desserts' },
-  { id: '17', name: 'Frittata', price: 43000, imageUrl: '../src/assets/Frittata.png', category: 'Breakfast' },
-  { id: '18', name: 'Soup', price: 10000, imageUrl: '../src/assets/Soup.png', category: 'Breakfast' },
-  { id: '19', name: 'Smoothies', price: 32000, imageUrl: '../src/assets/Smoothies.png', category: 'Beverages' },
-  { id: '20', name: 'Cake', price: 28000, imageUrl: '../src/assets/Cake.png', category: 'Desserts' },
-  { id: '21', name: 'Coke', price: 15000, imageUrl: '../src/assets/Coke.png', category: 'Beverages' },
-  { id: '22', name: 'Sandwich', price: 28000, imageUrl: '../src/assets/Sandwich.png', category: 'Breakfast' },
-  { id: '23', name: 'Baguette', price: 28000, imageUrl: '../src/assets/Baguette.png', category: 'Bakery' },
-  { id: '24', name: 'Eggs', price: 23000, imageUrl: '../src/assets/Eggs.png', category: 'Breakfast' },
-  { id: '25', name: 'Brownies', price: 30000, imageUrl: '../src/assets/Brownie.png', category: '' },
-  { id: '26', name: 'Bread Pudding', price: 15000, imageUrl: '../src/assets/Bread-Pudding.png', category: 'Desserts' },
-  { id: '27', name: 'Bacon', price: 35000, imageUrl: '../src/assets/Bacon.png', category: 'Breakfast' },
-  { id: '28', name: 'Toast', price: 32000, imageUrl: '../src/assets/Toast.png', category: 'Breakfast' },
-  { id: '29', name: 'Scone', price: 24000, imageUrl: '../src/assets/Scone.png', category: 'Bakery' },
-  { id: '30', name: 'Crepes', price: 20000, imageUrl: '../src/assets/Crepes.png', category: 'Desserts' },
-];
-
-const CATEGORIES = ['All Products', ...Array.from(new Set(MOCK_MENU.map(item => item.category).filter(Boolean)))];
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { CartProvider } from './context/CartContext';
+import MainPage from './pages/MainPage';
+import RecommendationPage from './pages/RecommendationPage';
+import PaymentPage from './pages/PaymentPage';
 
 export default function App() {
-  const [activeCategory, setActiveCategory] = useState('All Products');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const filteredMenu = MOCK_MENU.filter(item => {
-    const matchesCategory =
-      activeCategory === 'All Products' || item.category === activeCategory;
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
-      || item.category.toLowerCase().includes(searchTerm.toLowerCase().trim());
-
-    return matchesCategory && (searchTerm ? matchesSearch : true);
-  });
-
-  // Here is where you will eventually fetch your ML recommendations
-  const recommendedItems = MOCK_MENU.slice(0, 3);
-
   return (
-    <div className="min-h-screen p-6 font-sans">
-      
-      {/* Header Section */}
-      <header className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <button className="text-white text-2xl font-bold">&lt;&lt;</button>
-          <div>
-            <h1 className="text-3xl text-white font-serif italic">Marson's</h1>
-            <p className="text-sm text-white/80 uppercase tracking-widest">Coffee & Eatery</p>
-          </div>
-        </div>
-
-        <h2 className="text-4xl text-white font-serif">Menu</h2>
-
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <input 
-              type="text" 
-              placeholder="Search..." 
-              value={searchTerm}
-              onChange={event => setSearchTerm(event.target.value)}
-              className="px-4 py-2 rounded-full bg-white/20 text-white placeholder-white/60 border border-white/30 focus:outline-none focus:ring-2 focus:ring-cafe-gold"
-            />
-          </div>
-          <button className="text-white text-2xl">🛒</button>
-        </div>
-      </header>
-
-      {/* Category Navigation */}
-      <nav className="flex justify-center gap-8 mb-8 border-b border-white/20 pb-4">
-        {CATEGORIES.map(category => (
-          <button 
-            key={category}
-            onClick={() => setActiveCategory(category)}
-            className={`text-lg font-medium transition-colors ${
-              activeCategory === category 
-                ? 'text-white border-b-2 border-white' 
-                : 'text-white/60 hover:text-white/90'
-            }`}
-          >
-            {category}
-          </button>
-        ))}
-      </nav>
-
-      {/* Recommender Section Placeholder */}
-      <section className="mb-10">
-        <h3 className="text-center text-white text-xl font-bold mb-6">What do you wanna eat today?</h3>
-        {/* We will build out the horizontal carousel here later */}
-      </section>
-
-      {/* Main Menu Grid */}
-      <section>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-          {filteredMenu.map(item => (
-            <MenuCard key={item.id} item={item} />
-          ))}
-        </div>
-      </section>
-
-    </div>
+    <CartProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<MainPage />} />
+          <Route path="/recommendation" element={<RecommendationPage />} />
+          <Route path="/payment" element={<PaymentPage />} />
+        </Routes>
+      </BrowserRouter>
+    </CartProvider>
   );
 }
