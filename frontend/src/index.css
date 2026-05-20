@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root {
+@theme {
   /* Custom CSS variables for cafe colors */
   --color-cafe-brown: #8B5A2B;
   --color-cafe-gold: #CD950C;
@@ -10,4 +10,12 @@
 body {
   background: linear-gradient(to bottom, #2a1b15, #dcb99c);
   min-height: 100vh;
+}
+
+.hero-header {
+  background: linear-gradient(to bottom, #643F1D, #A26A37);
+}
+
+.hero-selection {
+  background: linear-gradient(to bottom, #B38456, #8f6842);
 }

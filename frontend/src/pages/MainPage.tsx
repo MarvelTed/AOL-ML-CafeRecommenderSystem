@@ -37,7 +37,7 @@ const MOCK_MENU: MenuItem[] = [
   { id: '30', name: 'Crepes', price: 20000, imageUrl: '../src/assets/Crepes.png', category: 'Desserts' },
 ];
 
-const CATEGORIES = ['All Products', ...Array.from(new Set(MOCK_MENU.map(item => item.category).filter(Boolean)))];
+const CATEGORIES = ['All Products', 'Breakfast', 'Main Course','Desserts', 'Beverages', 'Bakery'];
 
 export default function MainPage() {
   const navigate = useNavigate();
@@ -61,10 +61,10 @@ export default function MainPage() {
   };
 
   return (
-    <div className="min-h-screen p-6 font-sans">
+    <div className="min-h-screen font-sans">
       
       {/* Header Section */}
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between p-6 hero-header">
         <div className="flex items-center gap-4">
           <button className="text-white text-2xl font-bold">&lt;&lt;</button>
           <div>
@@ -95,7 +95,7 @@ export default function MainPage() {
       </header>
 
       {/* Category Navigation */}
-      <nav className="flex justify-center gap-8 mb-8 border-b border-white/20 pb-4">
+      <nav className="flex justify-center gap-8 mb-8 border-b border-white/20 pb-4 pt-8 hero-selection">
         {CATEGORIES.map(category => (
           <button 
             key={category}

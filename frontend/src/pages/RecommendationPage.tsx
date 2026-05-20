@@ -27,10 +27,10 @@ export default function RecommendationPage() {
   };
 
   return (
-    <div className="min-h-screen p-6 font-sans bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen font-sans">
       
       {/* Header */}
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between p-6 mb-8 hero-header">
         <button 
           onClick={() => navigate('/')}
           className="text-white text-2xl font-bold hover:text-cafe-gold transition"
@@ -62,7 +62,7 @@ export default function RecommendationPage() {
                 </div>
                 <h3 className="text-white font-semibold text-sm mb-1">{item.name}</h3>
                 <p className="text-white/60 text-xs mb-2">{item.category}</p>
-                <p className="text-cafe-gold font-semibold text-sm">
+                <p className="text-white/80 font-semibold text-sm">
                   {new Intl.NumberFormat('id-ID', {
                     style: 'currency',
                     currency: 'IDR',
@@ -90,7 +90,7 @@ export default function RecommendationPage() {
                         <p className="text-white font-semibold text-sm">{item.name}</p>
                         <p className="text-white/60 text-xs">Qty: {item.quantity}</p>
                       </div>
-                      <p className="text-cafe-gold font-semibold text-sm">
+                      <p className="text-white/80 font-semibold text-sm">
                         {new Intl.NumberFormat('id-ID', {
                           style: 'currency',
                           currency: 'IDR',

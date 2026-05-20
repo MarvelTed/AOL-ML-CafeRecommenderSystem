@@ -18,10 +18,10 @@ export default function PaymentPage() {
   const totalPrice = getTotalPrice();
 
   return (
-    <div className="min-h-screen p-6 font-sans bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen font-sans">
       
       {/* Header */}
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex items-center justify-between p-6 mb-8 hero-header">
         <button 
           onClick={handleBack}
           className="text-white text-2xl font-bold hover:text-cafe-gold transition"
@@ -64,7 +64,7 @@ export default function PaymentPage() {
                         }).format(item.price)} × {item.quantity}
                       </p>
                     </div>
-                    <p className="text-cafe-gold font-bold">
+                    <p className="text-white font-bold">
                       {new Intl.NumberFormat('id-ID', {
                         style: 'currency',
                         currency: 'IDR',
@@ -82,7 +82,7 @@ export default function PaymentPage() {
               <div className="bg-white/5 p-4 rounded-lg mb-8">
                 <div className="flex justify-between items-center">
                   <p className="text-white/80 font-semibold">Total Amount:</p>
-                  <p className="text-3xl font-bold text-cafe-gold">
+                  <p className="text-3xl font-bold text-white">
                     {new Intl.NumberFormat('id-ID', {
                       style: 'currency',
                       currency: 'IDR',
