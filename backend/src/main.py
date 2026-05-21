@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pathlib import Path
 import json
+import re
 from typing import Any
 
 app = FastAPI(title="Cafe Recommender API")
@@ -28,6 +29,10 @@ def normalize_key(value: str) -> str:
     return value.strip().lower()
 
 
+def normalize_menu_text(value: str) -> str:
+    return re.sub(r"\s+", " ", value.strip().lower())
+
+
 def singularize(value: str) -> str:
     value = value.strip()
     if value.endswith('ies'):
@@ -35,6 +40,44 @@ def singularize(value: str) -> str:
     if value.endswith('s') and not value.endswith('ss'):
         return value[:-1]
     return value
+
+
+def pluralize(value: str) -> str:
+    value = value.strip()
+    if value.endswith('y'):
+        return value[:-1] + 'ies'
+    if value.endswith('s'):
+        return value
+    return value + 's'
+
+
+def parse_chosen_menu(raw_text: str) -> list[str]:
+    chosen = []
+    for line in raw_text.splitlines():
+        trimmed = line.strip()
+        if not trimmed:
+            continue
+        match = re.match(r"^\d+\s+(.+)$", trimmed)
+        if match:
+            item_name = match.group(1).strip()
+            if item_name and item_name != "/read":
+                chosen.append(item_name)
+    return chosen
+
+
+CHOSEN_MENU_PATH = Path(__file__).resolve().parent.parent / "data" / "chosen.md"
+try:
+    chosen_menu_text = CHOSEN_MENU_PATH.read_text(encoding='utf-8')
+    chosen_menu_names = parse_chosen_menu(chosen_menu_text)
+except FileNotFoundError:
+    chosen_menu_names = []
+
+chosen_menu_set = set()
+for name in chosen_menu_names:
+    normalized = normalize_menu_text(name)
+    chosen_menu_set.add(normalized)
+    chosen_menu_set.add(singularize(normalized))
+    chosen_menu_set.add(pluralize(normalized))
 
 
 recommendation_index: dict[str, list] = {
@@ -91,6 +134,8 @@ def get_recommendations(request: CartRequest):
             rec_id, rec_score = normalized
             if rec_id in cart_items:
                 continue
+            if normalize_menu_text(rec_id) not in chosen_menu_set:
+                continue
             score_map[rec_id] = score_map.get(rec_id, 0.0) + rec_score
 
     sorted_recommendations = sorted(
@@ -107,3 +152,8 @@ def get_recommendations(request: CartRequest):
         "cart": cart_items,
         "recommendations": final_recommendations
     }
+
+
+@app.get("/chosen-menu")
+def get_chosen_menu():
+    return {"chosen_menu": chosen_menu_names}

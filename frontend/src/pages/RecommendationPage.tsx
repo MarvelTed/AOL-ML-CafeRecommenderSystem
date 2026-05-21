@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import MenuCard from '../components/MenuCard';
 import AddToCartModal from '../components/AddToCartModal';
 import type { MenuItem, RecommendationItem, RecommendationResponse } from '../types';
 
@@ -21,10 +22,45 @@ export default function RecommendationPage() {
   const navigate = useNavigate();
   const { cartItems } = useCart();
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
+  const [chosenMenuItems, setChosenMenuItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Omit<MenuItem, 'quantity'> | null>(null);
+
+  const normalizeName = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\s+/g, ' ');
+
+  const singularize = (value: string) => {
+    const normalized = value.trim().toLowerCase();
+    if (normalized.endsWith('ies')) return normalized.slice(0, -3) + 'y';
+    if (normalized.endsWith('s') && !normalized.endsWith('ss')) return normalized.slice(0, -1);
+    return normalized;
+  };
+
+  const pluralize = (value: string) => {
+    const normalized = value.trim().toLowerCase();
+    if (normalized.endsWith('y')) return normalized.slice(0, -1) + 'ies';
+    if (normalized.endsWith('s')) return normalized;
+    return `${normalized}s`;
+  };
+
+  const menuMap = new Map(MOCK_MENU.map(item => [normalizeName(item.name), item]));
+
+  const findMenuItemByName = (name: string): MenuItem | undefined => {
+    const normalized = normalizeName(name);
+    const direct = menuMap.get(normalized);
+    if (direct) return direct;
+
+    const singular = singularize(normalized);
+    const plural = pluralize(normalized);
+    return menuMap.get(singular) || menuMap.get(plural) ||
+      MOCK_MENU.find(item => normalizeName(item.name) === normalized);
+  };
 
   const fetchRecommendations = async (selectedIds: string[]) => {
     if (selectedIds.length === 0) {
@@ -62,6 +98,28 @@ export default function RecommendationPage() {
     fetchRecommendations(cartItems.map(item => item.name));
   }, [cartItems]);
 
+  useEffect(() => {
+    const fetchChosenMenu = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/chosen-menu`);
+        if (!response.ok) {
+          throw new Error(`Chosen menu request failed with status ${response.status}`);
+        }
+
+        const data = await response.json() as { chosen_menu: string[] };
+        const chosenItems = data.chosen_menu
+          .map((name: string) => findMenuItemByName(name))
+          .filter((item): item is MenuItem => Boolean(item));
+
+        setChosenMenuItems(chosenItems);
+      } catch {
+        setChosenMenuItems([]);
+      }
+    };
+
+    fetchChosenMenu();
+  }, []);
+
   const handleRecommendationClick = (item: MenuItem) => {
     setSelectedItem(item);
     setIsModalOpen(true);
@@ -85,7 +143,6 @@ export default function RecommendationPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl text-white font-bold">Suggested Items</h2>
-              <p className="text-white/60 text-sm mt-1">Based on your selected cart items, the backend returns up to 9 recommendations.</p>
             </div>
             <button
               onClick={() => fetchRecommendations(cartItems.map(item => item.name))}
@@ -104,41 +161,34 @@ export default function RecommendationPage() {
                 No recommendations available yet. Add items to your cart and click Refresh.
               </div>
             ) : (
-              recommendations.map(rec => (
-                <div key={rec.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/20">
-                  <p className="text-white font-semibold text-lg">{rec.id}</p>
-                  <p className="text-white/60 text-sm mt-2">Score: {rec.score.toFixed(2)}</p>
+              Array.from(
+                new Map(
+                  recommendations
+                    .map(rec => findMenuItemByName(rec.id))
+                    .filter((item): item is MenuItem => Boolean(item))
+                    .map(item => [item.id, item])
+                ).values()
+              ).map(item => (
+                <div key={item.id} className="cursor-pointer" onClick={() => handleRecommendationClick(item)}>
+                  <MenuCard item={item} />
                 </div>
               ))
             )}
           </div>
 
-          <h3 className="text-xl text-white font-bold mb-3">Quick Preview</h3>
+          <h3 className="text-xl text-white font-bold mb-3">Available chosen menu</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {MOCK_MENU.map(item => (
-              <div
-                key={item.id}
-                onClick={() => handleRecommendationClick(item)}
-                className="bg-white/10 backdrop-blur-sm rounded-xl p-4 cursor-pointer hover:bg-white/20 transition border border-white/20"
-              >
-                <div className="w-full h-24 bg-white/10 rounded-lg mb-3 flex items-center justify-center">
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="w-full h-full object-contain p-2"
-                  />
-                </div>
-                <h3 className="text-white font-semibold text-sm mb-1">{item.name}</h3>
-                <p className="text-white/60 text-xs mb-2">{item.category}</p>
-                <p className="text-white/80 font-semibold text-sm">
-                  {new Intl.NumberFormat('id-ID', {
-                    style: 'currency',
-                    currency: 'IDR',
-                    minimumFractionDigits: 0,
-                  }).format(item.price)}
-                </p>
+            {chosenMenuItems.length === 0 ? (
+              <div className="col-span-full text-white/70 py-8 text-center">
+                Loading chosen menu items...
               </div>
-            ))}
+            ) : (
+              chosenMenuItems.map(item => (
+                <div key={item.id} className="cursor-pointer" onClick={() => handleRecommendationClick(item)}>
+                  <MenuCard item={item} />
+                </div>
+              ))
+            )}
           </div>
         </div>
 
