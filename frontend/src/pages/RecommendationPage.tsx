@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import AddToCartModal from '../components/AddToCartModal';
-import type { MenuItem } from '../types';
+import type { MenuItem, RecommendationItem, RecommendationResponse } from '../types';
 
 const MOCK_MENU: MenuItem[] = [
   { id: '1', name: 'Bread', price: 18000, imageUrl: '../src/assets/Bread.png', category: 'Bakery' },
@@ -15,11 +15,52 @@ const MOCK_MENU: MenuItem[] = [
   { id: '8', name: 'Pastry', price: 28000, imageUrl: '../src/assets/Pastry.png', category: 'Bakery' },
 ];
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
 export default function RecommendationPage() {
   const navigate = useNavigate();
   const { cartItems } = useCart();
+  const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Omit<MenuItem, 'quantity'> | null>(null);
+
+  const fetchRecommendations = async (selectedIds: string[]) => {
+    if (selectedIds.length === 0) {
+      setRecommendations([]);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/recommend`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items: selectedIds, top_k: 9 }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Recommendation request failed with status ${response.status}`);
+      }
+
+      const data = (await response.json()) as RecommendationResponse;
+      setRecommendations(data.recommendations || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error while fetching recommendations');
+      setRecommendations([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecommendations(cartItems.map(item => item.name));
+  }, [cartItems]);
 
   const handleRecommendationClick = (item: MenuItem) => {
     setSelectedItem(item);
@@ -28,10 +69,8 @@ export default function RecommendationPage() {
 
   return (
     <div className="min-h-screen font-sans">
-      
-      {/* Header */}
       <header className="flex items-center justify-between p-6 mb-8 hero-header">
-        <button 
+        <button
           onClick={() => navigate('/')}
           className="text-white text-2xl font-bold hover:text-cafe-gold transition"
         >
@@ -42,20 +81,49 @@ export default function RecommendationPage() {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-        
-        {/* Recommended Items */}
         <div className="lg:col-span-2">
-          <h2 className="text-2xl text-white font-bold mb-6">Suggested Items</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl text-white font-bold">Suggested Items</h2>
+              <p className="text-white/60 text-sm mt-1">Based on your selected cart items, the backend returns up to 9 recommendations.</p>
+            </div>
+            <button
+              onClick={() => fetchRecommendations(cartItems.map(item => item.name))}
+              className="bg-cafe-gold text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600 transition"
+            >
+              Refresh
+            </button>
+          </div>
+
+          {isLoading && <p className="text-white/70 mb-4">Loading recommendations…</p>}
+          {error && <p className="text-red-400 mb-4">{error}</p>}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            {recommendations.length === 0 && !isLoading ? (
+              <div className="bg-white/10 border border-white/20 rounded-2xl p-6 text-white/70">
+                No recommendations available yet. Add items to your cart and click Refresh.
+              </div>
+            ) : (
+              recommendations.map(rec => (
+                <div key={rec.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/20">
+                  <p className="text-white font-semibold text-lg">{rec.id}</p>
+                  <p className="text-white/60 text-sm mt-2">Score: {rec.score.toFixed(2)}</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          <h3 className="text-xl text-white font-bold mb-3">Quick Preview</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {MOCK_MENU.map(item => (
-              <div 
+              <div
                 key={item.id}
                 onClick={() => handleRecommendationClick(item)}
                 className="bg-white/10 backdrop-blur-sm rounded-xl p-4 cursor-pointer hover:bg-white/20 transition border border-white/20"
               >
                 <div className="w-full h-24 bg-white/10 rounded-lg mb-3 flex items-center justify-center">
-                  <img 
-                    src={item.imageUrl} 
+                  <img
+                    src={item.imageUrl}
                     alt={item.name}
                     className="w-full h-full object-contain p-2"
                   />
@@ -74,11 +142,10 @@ export default function RecommendationPage() {
           </div>
         </div>
 
-        {/* Cart Summary */}
         <div className="lg:col-span-1">
           <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 sticky top-6">
             <h2 className="text-xl text-white font-bold mb-6">Your Cart</h2>
-            
+
             {cartItems.length === 0 ? (
               <p className="text-white/60 text-center py-8">Your cart is empty</p>
             ) : (
@@ -113,7 +180,7 @@ export default function RecommendationPage() {
         </div>
       </div>
 
-      <AddToCartModal 
+      <AddToCartModal
         isOpen={isModalOpen}
         item={selectedItem}
         onClose={() => setIsModalOpen(false)}
