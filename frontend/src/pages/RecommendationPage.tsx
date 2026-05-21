@@ -176,7 +176,7 @@ export default function RecommendationPage() {
             )}
           </div>
 
-          <h3 className="text-xl text-white font-bold mb-3">Available chosen menu</h3>
+          <h3 className="text-xl text-white font-bold mb-3">Must Have Snacks!</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {chosenMenuItems.length === 0 ? (
               <div className="col-span-full text-white/70 py-8 text-center">
