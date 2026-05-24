@@ -8,6 +8,11 @@ from typing import Any
 
 app = FastAPI(title="Cafe Recommender API")
 
+origins = [
+    "http://localhost:5173",
+    "https://your-frontend-domain.vercel.app", # Future Vercel production URL
+]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -157,3 +162,7 @@ def get_recommendations(request: CartRequest):
 @app.get("/chosen-menu")
 def get_chosen_menu():
     return {"chosen_menu": chosen_menu_names}
+
+@app.get("/")
+def read_root():
+    return {"status": "Backend is running smoothly"}
