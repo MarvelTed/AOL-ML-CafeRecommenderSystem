@@ -5,7 +5,6 @@ import AddToCartModal from '../components/AddToCartModal';
 import type { MenuItem } from '../types';
 
 const MOCK_MENU: MenuItem[] = [
-  // Notice the path simply starts with /assets/ now
   { id: '1', name: 'Bread', price: 18000, imageUrl: '/assets/Bread.png', category: 'Bakery' },
   { id: '2', name: 'Salad', price: 30000, imageUrl: '/assets/Salad.png', category: 'Main Course' },
   { id: '3', name: 'Hot Chocolate', price: 28000, imageUrl: '/assets/Hot-Chocolate.png', category: 'Beverages' },
@@ -26,7 +25,7 @@ const MOCK_MENU: MenuItem[] = [
   { id: '18', name: 'Soup', price: 10000, imageUrl: '/assets/Soup.png', category: 'Breakfast' },
   { id: '19', name: 'Smoothies', price: 32000, imageUrl: '/assets/Smoothies.png', category: 'Beverages' },
   { id: '20', name: 'Cake', price: 28000, imageUrl: '/assets/Cake.png', category: 'Desserts' },
-  { id: '21', name: 'Coke', price: 15000, imageUrl: '/asets/Coke.png', category: 'Beverages' },
+  { id: '21', name: 'Coke', price: 15000, imageUrl: '/assets/Coke.png', category: 'Beverages' },
   { id: '22', name: 'Sandwich', price: 28000, imageUrl: '/assets/Sandwich.png', category: 'Breakfast' },
   { id: '23', name: 'Baguette', price: 28000, imageUrl: '/assets/Baguette.png', category: 'Bakery' },
   { id: '24', name: 'Eggs', price: 23000, imageUrl: '/assets/Eggs.png', category: 'Breakfast' },
@@ -115,7 +114,6 @@ export default function MainPage() {
       {/* Recommender Section Placeholder */}
       <section className="mb-10">
         <h3 className="text-center text-white text-xl font-bold mb-6">What do you wanna eat today?</h3>
-        {/* We will build out the horizontal carousel here later */}
       </section>
 
       {/* Main Menu Grid */}

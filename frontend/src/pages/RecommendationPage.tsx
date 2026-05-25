@@ -7,7 +7,6 @@ import type { MenuItem, RecommendationItem } from '../types';
 import knnData from '../data/knn_recommendations.json';
 
 const MOCK_MENU: MenuItem[] = [
-  // Notice the path simply starts with /assets/ now
   { id: '1', name: 'Bread', price: 18000, imageUrl: '/assets/Bread.png', category: 'Bakery' },
   { id: '2', name: 'Salad', price: 30000, imageUrl: '/assets/Salad.png', category: 'Main Course' },
   { id: '3', name: 'Hot Chocolate', price: 28000, imageUrl: '/assets/Hot-Chocolate.png', category: 'Beverages' },
@@ -95,18 +94,13 @@ export default function RecommendationPage() {
     setError(null);
     
     try {
-      // Optional: A tiny artificial delay (200ms) makes the "Refresh" button 
-      // feel like it's actually doing work, providing better UX.
       await new Promise(resolve => setTimeout(resolve, 200));
 
       let rawMatches: string[] = [];
 
-      // Loop through every item in the cart
       selectedNames.forEach(name => {
-        // Find recommendations for this specific item
         let matches = knnRecommendations[name];
 
-        // Fallback: If exact case matching fails, look for a case-insensitive match
         if (!matches) {
           const matchingKey = Object.keys(knnRecommendations).find(
             key => key.toLowerCase() === name.toLowerCase()
@@ -116,16 +110,11 @@ export default function RecommendationPage() {
           }
         }
 
-        // If we found recommendations, add them to our pool
         if (matches) {
           rawMatches = [...rawMatches, ...matches];
         }
       });
 
-      // Filter the results:
-      // 1. Remove duplicates using a Set
-      // 2. Filter out items the user already has in their cart
-      // 3. Grab only the top 9 items
       const uniqueResults = Array.from(new Set(rawMatches))
         .filter(recName => !selectedNames.includes(recName))
         .slice(0, 10);
