@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import MenuCard from '../components/MenuCard';
 import AddToCartModal from '../components/AddToCartModal';
-import type { MenuItem, RecommendationItem, RecommendationResponse } from '../types';
+import type { MenuItem, RecommendationItem } from '../types';
+import knnData from '../data/knn_recommendations.json';
 
 const MOCK_MENU: MenuItem[] = [
   { id: '1', name: 'Bread', price: 18000, imageUrl: '../src/assets/Bread.png', category: 'Bakery' },
@@ -14,7 +15,31 @@ const MOCK_MENU: MenuItem[] = [
   { id: '6', name: 'Muffin', price: 18000, imageUrl: '../src/assets/Muffin.png', category: 'Bakery' },
   { id: '7', name: 'Coffee', price: 23000, imageUrl: '../src/assets/Coffee.png', category: 'Beverages' },
   { id: '8', name: 'Pastry', price: 28000, imageUrl: '../src/assets/Pastry.png', category: 'Bakery' },
+  { id: '9', name: 'Medialuna', price: 32000, imageUrl: '../src/assets/Medialuna.png', category: 'Bakery' },
+  { id: '10', name: 'Tea', price: 20000, imageUrl: '../src/assets/Tea.png', category: 'Beverages' },
+  { id: '11', name: 'Tartine', price: 38000, imageUrl: '../src/assets/Tartine.png', category: 'Breakfast' },
+  { id: '12', name: 'Basket', price: 62000, imageUrl: '../src/assets/Basket.png', category: 'Main Course' },
+  { id: '13', name: 'Mineral Water', price: 10000, imageUrl: '../src/assets/Mineral-Water.png', category: 'Beverages' },
+  { id: '14', name: 'Fudge', price: 32000, imageUrl: '../src/assets/Fudge.png', category: 'Desserts' },
+  { id: '15', name: 'Juice', price: 28000, imageUrl: '../src/assets/Juice.png', category: 'Beverages' },
+  { id: '16', name: 'Victorian Sponge', price: 38000, imageUrl: '../src/assets/Victorian-Sponge.png', category: 'Desserts' },
+  { id: '17', name: 'Frittata', price: 43000, imageUrl: '../src/assets/Frittata.png', category: 'Breakfast' },
+  { id: '18', name: 'Soup', price: 10000, imageUrl: '../src/assets/Soup.png', category: 'Breakfast' },
+  { id: '19', name: 'Smoothies', price: 32000, imageUrl: '../src/assets/Smoothies.png', category: 'Beverages' },
+  { id: '20', name: 'Cake', price: 28000, imageUrl: '../src/assets/Cake.png', category: 'Desserts' },
+  { id: '21', name: 'Coke', price: 15000, imageUrl: '../src/assets/Coke.png', category: 'Beverages' },
+  { id: '22', name: 'Sandwich', price: 28000, imageUrl: '../src/assets/Sandwich.png', category: 'Breakfast' },
+  { id: '23', name: 'Baguette', price: 28000, imageUrl: '../src/assets/Baguette.png', category: 'Bakery' },
+  { id: '24', name: 'Eggs', price: 23000, imageUrl: '../src/assets/Eggs.png', category: 'Breakfast' },
+  { id: '25', name: 'Brownies', price: 30000, imageUrl: '../src/assets/Brownie.png', category: '' },
+  { id: '26', name: 'Bread Pudding', price: 15000, imageUrl: '../src/assets/Bread-Pudding.png', category: 'Desserts' },
+  { id: '27', name: 'Bacon', price: 35000, imageUrl: '../src/assets/Bacon.png', category: 'Breakfast' },
+  { id: '28', name: 'Toast', price: 32000, imageUrl: '../src/assets/Toast.png', category: 'Breakfast' },
+  { id: '29', name: 'Scone', price: 24000, imageUrl: '../src/assets/Scone.png', category: 'Bakery' },
+  { id: '30', name: 'Crepes', price: 20000, imageUrl: '../src/assets/Crepes.png', category: 'Desserts' },
 ];
+
+const knnRecommendations: Record<string, string[]> = knnData;
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
@@ -22,7 +47,6 @@ export default function RecommendationPage() {
   const navigate = useNavigate();
   const { cartItems } = useCart();
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
-  const [chosenMenuItems, setChosenMenuItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,32 +86,59 @@ export default function RecommendationPage() {
       MOCK_MENU.find(item => normalizeName(item.name) === normalized);
   };
 
-  const fetchRecommendations = async (selectedIds: string[]) => {
-    if (selectedIds.length === 0) {
+  const fetchRecommendations = async (selectedNames: string[]) => {
+    if (selectedNames.length === 0) {
       setRecommendations([]);
       return;
     }
 
     setIsLoading(true);
     setError(null);
-
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/recommend`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ items: selectedIds, top_k: 9 }),
+      // Optional: A tiny artificial delay (200ms) makes the "Refresh" button 
+      // feel like it's actually doing work, providing better UX.
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      let rawMatches: string[] = [];
+
+      // Loop through every item in the cart
+      selectedNames.forEach(name => {
+        // Find recommendations for this specific item
+        let matches = knnRecommendations[name];
+
+        // Fallback: If exact case matching fails, look for a case-insensitive match
+        if (!matches) {
+          const matchingKey = Object.keys(knnRecommendations).find(
+            key => key.toLowerCase() === name.toLowerCase()
+          );
+          if (matchingKey) {
+            matches = knnRecommendations[matchingKey];
+          }
+        }
+
+        // If we found recommendations, add them to our pool
+        if (matches) {
+          rawMatches = [...rawMatches, ...matches];
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`Recommendation request failed with status ${response.status}`);
-      }
+      // Filter the results:
+      // 1. Remove duplicates using a Set
+      // 2. Filter out items the user already has in their cart
+      // 3. Grab only the top 9 items
+      const uniqueResults = Array.from(new Set(rawMatches))
+        .filter(recName => !selectedNames.includes(recName))
+        .slice(0, 10);
 
-      const data = (await response.json()) as RecommendationResponse;
-      setRecommendations(data.recommendations || []);
+      const formattedRecommendations = uniqueResults.map((recName, index) => ({ 
+        id: recName, 
+        score: 0.99 - (index * 0.01) 
+      }));
+
+      setRecommendations(formattedRecommendations);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error while fetching recommendations');
+      setError('An error occurred while generating local recommendations.');
       setRecommendations([]);
     } finally {
       setIsLoading(false);
@@ -97,28 +148,6 @@ export default function RecommendationPage() {
   useEffect(() => {
     fetchRecommendations(cartItems.map(item => item.name));
   }, [cartItems]);
-
-  useEffect(() => {
-    const fetchChosenMenu = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/chosen-menu`);
-        if (!response.ok) {
-          throw new Error(`Chosen menu request failed with status ${response.status}`);
-        }
-
-        const data = await response.json() as { chosen_menu: string[] };
-        const chosenItems = data.chosen_menu
-          .map((name: string) => findMenuItemByName(name))
-          .filter((item): item is MenuItem => Boolean(item));
-
-        setChosenMenuItems(chosenItems);
-      } catch {
-        setChosenMenuItems([]);
-      }
-    };
-
-    fetchChosenMenu();
-  }, []);
 
   const handleRecommendationClick = (item: MenuItem) => {
     setSelectedItem(item);
@@ -169,21 +198,6 @@ export default function RecommendationPage() {
                     .map(item => [item.id, item])
                 ).values()
               ).map(item => (
-                <div key={item.id} className="cursor-pointer" onClick={() => handleRecommendationClick(item)}>
-                  <MenuCard item={item} />
-                </div>
-              ))
-            )}
-          </div>
-
-          <h3 className="text-xl text-white font-bold mb-3">Must Have Snacks!</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {chosenMenuItems.length === 0 ? (
-              <div className="col-span-full text-white/70 py-8 text-center">
-                Loading chosen menu items...
-              </div>
-            ) : (
-              chosenMenuItems.map(item => (
                 <div key={item.id} className="cursor-pointer" onClick={() => handleRecommendationClick(item)}>
                   <MenuCard item={item} />
                 </div>
